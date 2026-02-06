@@ -16,7 +16,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import SortableProgram from './SortableProgram';
 
-export default function RankList({ programs, setPrograms }) {
+export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms }) {
   const [newProgram, setNewProgram] = useState('');
 
   const sensors = useSensors(
@@ -29,7 +29,7 @@ export default function RankList({ programs, setPrograms }) {
   function handleDragEnd(event) {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setPrograms((items) => {
+      onUpdatePrograms(person.id, (items) => {
         const oldIndex = items.findIndex((i) => i.id === active.id);
         const newIndex = items.findIndex((i) => i.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
@@ -37,40 +37,47 @@ export default function RankList({ programs, setPrograms }) {
     }
   }
 
-  function handleAdd(e) {
+  function handleAddProgram(e) {
     e.preventDefault();
     const name = newProgram.trim();
     if (!name) return;
-    setPrograms((prev) => [
+    onUpdatePrograms(person.id, (prev) => [
       ...prev,
       { id: crypto.randomUUID(), name },
     ]);
     setNewProgram('');
   }
 
-  function handleRemove(id) {
-    setPrograms((prev) => prev.filter((p) => p.id !== id));
+  function handleRemoveProgram(programId) {
+    onUpdatePrograms(person.id, (prev) => prev.filter((p) => p.id !== programId));
   }
 
   return (
-    <section className="rank-list-section">
-      <h2>Your Rank List</h2>
+    <div className="person-column">
+      <div className="person-header">
+        <h3 className="person-name">{person.name}</h3>
+        <button
+          className="remove-person-btn"
+          onClick={() => onRemovePerson(person.id)}
+          aria-label={`Remove ${person.name}`}
+        >
+          ×
+        </button>
+      </div>
 
-      <form className="add-program-form" onSubmit={handleAdd}>
+      <form className="add-program-form" onSubmit={handleAddProgram}>
         <input
           type="text"
           value={newProgram}
           onChange={(e) => setNewProgram(e.target.value)}
-          placeholder="Enter program name…"
-          aria-label="Program name"
+          placeholder="Add program…"
+          aria-label={`Add program for ${person.name}`}
         />
-        <button type="submit">Add Program</button>
+        <button type="submit">Add</button>
       </form>
 
-      {programs.length === 0 ? (
-        <p className="empty-message">
-          No programs yet. Add a residency program above to get started.
-        </p>
+      {person.programs.length === 0 ? (
+        <p className="empty-message-small">No programs yet.</p>
       ) : (
         <DndContext
           sensors={sensors}
@@ -78,21 +85,21 @@ export default function RankList({ programs, setPrograms }) {
           onDragEnd={handleDragEnd}
           modifiers={[restrictToVerticalAxis]}
         >
-          <SortableContext items={programs} strategy={verticalListSortingStrategy}>
+          <SortableContext items={person.programs} strategy={verticalListSortingStrategy}>
             <div className="rank-list">
-              {programs.map((program, index) => (
+              {person.programs.map((program, index) => (
                 <SortableProgram
                   key={program.id}
                   id={program.id}
                   rank={index + 1}
                   name={program.name}
-                  onRemove={handleRemove}
+                  onRemove={handleRemoveProgram}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
       )}
-    </section>
+    </div>
   );
 }
