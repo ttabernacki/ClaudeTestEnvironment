@@ -376,40 +376,65 @@ function App() {
       ? pGroupSameCity([elliotIdx, mattIdx])
       : null;
 
+    // P(at least 2 people alone in different cities — the group chat is all that's left)
+    const scatteredProb = noOverlapProb;
+
+    // P(someone matches at their last choice)
+    const lastChoiceProb = (() => {
+      let prob = 0;
+      for (let i = 0; i < N; i++) {
+        const progs = peopleWithPrograms[i].programs;
+        if (progs.length === 0) continue;
+        const lastLoc = progs[progs.length - 1].location.toLowerCase().trim();
+        const lastProb = progs.length <= 3
+          ? [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3][progs.length - 1] / 100
+          : (rankProbs.rank4plus / Math.max(1, progs.length - 3)) / 100;
+        prob += lastProb;
+      }
+      return Math.min(1, prob);
+    })();
+
     funStats = [
       {
         label: `Chance we all drop out of medicine and move to Berlin`,
+        desc: `P(no two people in the same city)`,
         value: noOverlapProb,
         show: true,
       },
       {
         label: `Chance someone's hate-swiping Hinge alone in a new city`,
+        desc: `P(at least one person has no one else in their city)`,
         value: anyoneAlone,
         show: true,
       },
       {
         label: `Chance of accidental resident orgy`,
+        desc: `P(${Math.min(3, N)}+ people end up in the same city)`,
         value: orgyProb,
         show: true,
       },
       {
         label: `Chance you'll all be fighting over the same 1-bedroom apartment`,
+        desc: `P(everyone in the same city)`,
         value: everyoneSameProb,
         show: true,
       },
       {
         label: `Officially Designated Rat Kingdom`,
+        desc: `City most likely to contain the entire group`,
         value: bestCity.prob,
         cityLabel: bestCity.location ? displayLocation(bestCity.location) : null,
         show: bestCity.location != null,
       },
       {
         label: `Chance ${names.length >= 2 ? names[0] + ' is sobbing alone on Match Day' : 'someone is sobbing alone'}`,
+        desc: `P(${names[0] || 'first person'} ends up in a city with none of you)`,
         value: pAlone[0],
         show: pAlone.length > 0,
       },
       {
         label: `Chance of a third wheel situation`,
+        desc: `P(exactly 2 people in a city while someone else is alone)`,
         value: N >= 3
           ? (() => {
               let prob = 0;
@@ -432,27 +457,50 @@ function App() {
         show: N >= 3,
       },
       {
+        label: `Chance the group chat becomes long-distance therapy`,
+        desc: `P(everyone in a different city)`,
+        value: scatteredProb,
+        show: N >= 3,
+      },
+      {
+        label: `Chance someone rage-applies to a fellowship immediately`,
+        desc: `P(someone matches at their last-ranked program)`,
+        value: lastChoiceProb,
+        show: true,
+      },
+      {
+        label: `Chance of "I'm literally moving to your city" energy`,
+        desc: `P(at least one pair in the same city)`,
+        value: atLeastOnePairProb,
+        show: true,
+      },
+      {
         label: `Chance of professionalism violation`,
+        desc: `P(Tomasz, Matt, and/or Elliot match at the same program)`,
         value: profViolationProb,
         show: profViolationProb !== null,
       },
       {
         label: `Chance of voyeurism`,
+        desc: `P(Katelyn and Kate end up in the same city)`,
         value: voyeurismProb,
         show: voyeurismProb !== null,
       },
       {
         label: `Chance of going to Townhall`,
+        desc: `P(Katelyn and Kate both match in Cleveland)`,
         value: townhallProb,
         show: townhallProb !== null,
       },
       {
         label: `Fear level of twinks`,
+        desc: `P(Elliot and Matt end up in the same city)`,
         value: twinkFearProb,
         show: twinkFearProb !== null,
       },
       {
         label: `Chance of Berlin 2027 Trip`,
+        desc: `This is not a probability. This is a promise.`,
         value: 1.0,
         show: true,
         isJoke: true,
@@ -519,12 +567,15 @@ function App() {
                 <h3 className="prob-group-title fun-title">The Real Stats Nobody Asked For</h3>
                 {funStats.filter((s) => s.show).map((stat, i) => (
                   <div className={`prob-card fun-card${stat.isJoke ? ' joke' : ''}`} key={i}>
-                    <span className="prob-label">
-                      {stat.label}
+                    <div className="prob-label">
+                      <span>{stat.label}</span>
                       {stat.cityLabel && (
                         <span className="fun-city"> ({stat.cityLabel})</span>
                       )}
-                    </span>
+                      {stat.desc && (
+                        <span className="fun-desc">{stat.desc}</span>
+                      )}
+                    </div>
                     <span className="prob-value fun-value">
                       {stat.isJoke ? '100%' : `${(stat.value * 100).toFixed(1)}%`}
                     </span>

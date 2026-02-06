@@ -460,6 +460,14 @@
   color: #a855f7;
 }
 
+.fun-desc {
+  display: block;
+  font-style: italic;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.15rem;
+}
+
 /* ── Shared ── */
 .empty-message {
   color: #9ca3af;
