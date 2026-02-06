@@ -1,7 +1,7 @@
 # CLAUDE.md - Project Guide for Claude Code
 
 ## Repository
-Residency Match Calculator — a React webapp where users build a residency rank list (drag-and-drop) and view match probabilities.
+RatMatch — a React webapp where users build a residency rank list (drag-and-drop) and view match probabilities.
 
 ## Commands
 - `npm install` — install dependencies

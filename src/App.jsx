@@ -599,7 +599,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Residency Match Calculator</h1>
+        <h1>RatMatch</h1>
         <p>Add people and build each person's rank list.</p>
       </header>
 
