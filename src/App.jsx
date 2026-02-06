@@ -1,17 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PersonColumn from './components/PersonColumn';
 import ProbabilitySliders from './components/ProbabilitySliders';
 import './App.css';
 
+const DEFAULT_RANK_PROBS = {
+  rank1: 50,
+  rank2: 25,
+  rank3: 15,
+  rank4plus: 10,
+};
+
+function loadFromStorage(key, fallback) {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function App() {
-  const [people, setPeople] = useState([]);
+  const [people, setPeople] = useState(() => loadFromStorage('rmc-people', []));
   const [newPersonName, setNewPersonName] = useState('');
-  const [rankProbs, setRankProbs] = useState({
-    rank1: 50,
-    rank2: 25,
-    rank3: 15,
-    rank4plus: 10,
-  });
+  const [rankProbs, setRankProbs] = useState(() => loadFromStorage('rmc-rankProbs', DEFAULT_RANK_PROBS));
+
+  // Persist to localStorage on every change
+  useEffect(() => {
+    localStorage.setItem('rmc-people', JSON.stringify(people));
+  }, [people]);
+
+  useEffect(() => {
+    localStorage.setItem('rmc-rankProbs', JSON.stringify(rankProbs));
+  }, [rankProbs]);
 
   function addPerson(e) {
     e.preventDefault();
