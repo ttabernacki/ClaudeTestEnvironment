@@ -10,6 +10,88 @@ const DEFAULT_RANK_PROBS = {
   rank4plus: 10,
 };
 
+const DEFAULT_PEOPLE = [
+  {
+    id: 'default-tomasz', name: 'Tomasz', included: true,
+    programs: [
+      { id: 't-1', name: 'Cornell', location: 'NYC' },
+      { id: 't-2', name: 'Sinai', location: 'NYC' },
+      { id: 't-3', name: 'Columbia', location: 'NYC' },
+      { id: 't-4', name: 'NYU-Tisch', location: 'NYC' },
+      { id: 't-5', name: 'NYU-Bellvue', location: 'NYC' },
+      { id: 't-6', name: 'Beth Israel', location: 'Boston' },
+      { id: 't-7', name: 'HUP', location: 'Philadelphia' },
+      { id: 't-8', name: 'Northwestern', location: 'Chicago' },
+      { id: 't-9', name: 'UCLA', location: 'LA' },
+      { id: 't-10', name: 'Thomas Jefferson', location: 'Philadelphia' },
+    ],
+  },
+  {
+    id: 'default-elliot', name: 'Elliot', included: true,
+    programs: [
+      { id: 'e-1', name: 'Columbia', location: 'NYC' },
+      { id: 'e-2', name: 'Sinai', location: 'NYC' },
+      { id: 'e-3', name: 'NYU-Tisch', location: 'NYC' },
+      { id: 'e-4', name: 'MGH', location: 'Boston' },
+      { id: 'e-5', name: 'Johns Hopkins', location: 'Baltimore' },
+    ],
+  },
+  {
+    id: 'default-matt', name: 'Matt', included: true,
+    programs: [
+      { id: 'm-1', name: 'Cornell', location: 'NYC' },
+      { id: 'm-2', name: 'Sinai', location: 'NYC' },
+      { id: 'm-3', name: 'Columbia', location: 'NYC' },
+      { id: 'm-4', name: 'NYU-Tisch', location: 'NYC' },
+      { id: 'm-5', name: 'NYU-Bellvue', location: 'NYC' },
+      { id: 'm-6', name: 'MGH', location: 'Boston' },
+      { id: 'm-7', name: 'Beth Israel', location: 'Boston' },
+      { id: 'm-8', name: 'BWH', location: 'Boston' },
+      { id: 'm-9', name: 'UCLA', location: 'LA' },
+      { id: 'm-10', name: 'Colorado', location: 'Denver' },
+      { id: 'm-11', name: 'Northwestern', location: 'Chicago' },
+      { id: 'm-12', name: 'UChicago', location: 'Chicago' },
+      { id: 'm-13', name: 'Thomas Jefferson', location: 'Philadelphia' },
+      { id: 'm-14', name: 'CCF', location: 'Cleveland' },
+      { id: 'm-15', name: 'UH', location: 'Cleveland' },
+    ],
+  },
+  {
+    id: 'default-kate', name: 'Kate', included: true,
+    programs: [
+      { id: 'ka-1', name: 'Sinai', location: 'NYC' },
+      { id: 'ka-2', name: 'Beth Israel', location: 'Boston' },
+    ],
+  },
+  {
+    id: 'default-katelyn', name: 'Katelyn', included: true,
+    programs: [
+      { id: 'kn-1', name: 'Sinai', location: 'NYC' },
+      { id: 'kn-2', name: 'NYU', location: 'NYC' },
+    ],
+  },
+  {
+    id: 'default-elad', name: 'Elad', included: true,
+    programs: [
+      { id: 'el-1', name: 'Sinai', location: 'NYC' },
+      { id: 'el-2', name: 'Cooper', location: 'Philadelphia' },
+      { id: 'el-3', name: 'CCF', location: 'Cleveland' },
+      { id: 'el-4', name: 'Colorado', location: 'Denver' },
+      { id: 'el-5', name: 'UMass', location: 'Boston' },
+    ],
+  },
+  {
+    id: 'default-david', name: 'David', included: true,
+    programs: [
+      { id: 'd-1', name: 'Northwestern', location: 'Chicago' },
+      { id: 'd-2', name: 'MGH', location: 'Boston' },
+      { id: 'd-3', name: 'UPMC', location: 'Pittsburgh' },
+      { id: 'd-4', name: 'HUP', location: 'Philadelphia' },
+      { id: 'd-5', name: 'Michigan', location: 'Michigan' },
+    ],
+  },
+];
+
 function loadFromStorage(key, fallback) {
   try {
     const saved = localStorage.getItem(key);
@@ -20,7 +102,7 @@ function loadFromStorage(key, fallback) {
 }
 
 function App() {
-  const [people, setPeople] = useState(() => loadFromStorage('rmc-people', []));
+  const [people, setPeople] = useState(() => loadFromStorage('rmc-people', DEFAULT_PEOPLE));
   const [newPersonName, setNewPersonName] = useState('');
   const [rankProbs, setRankProbs] = useState(() => loadFromStorage('rmc-rankProbs', DEFAULT_RANK_PROBS));
 
