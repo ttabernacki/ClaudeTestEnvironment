@@ -435,6 +435,8 @@ function App() {
     const elliotIdx = findPerson('Elliot');
     const katelynIdx = findPerson('Katelyn');
     const kateIdx = findPerson('Kate');
+    const davidIdx = findPerson('David');
+    const eladIdx = findPerson('Elad');
 
     // Professionalism violation: increases with Tomasz, Matt, Elliot at same program
     const profGroup = [tomaszIdx, mattIdx, elliotIdx].filter((i) => i !== null);
@@ -455,6 +457,79 @@ function App() {
     // Fear level of twinks: Elliot and Matt same city
     const twinkFearProb = elliotIdx !== null && mattIdx !== null
       ? pGroupSameCity([elliotIdx, mattIdx])
+      : null;
+
+    // David isn't banished: P(someone in same city as David)
+    const davidNotBanishedProb = (() => {
+      if (davidIdx === null) return null;
+      // P(at least one other person shares David's city)
+      // = 1 - P(David alone)
+      let pDavidAlone = 0;
+      for (const loc of allLocations) {
+        const pDavid = allLocationProbs[davidIdx][loc] || 0;
+        if (pDavid === 0) continue;
+        let othersAway = 1;
+        for (let j = 0; j < N; j++) {
+          if (j === davidIdx) continue;
+          othersAway *= 1 - (allLocationProbs[j][loc] || 0);
+        }
+        pDavidAlone += pDavid * othersAway;
+      }
+      return 1 - pDavidAlone;
+    })();
+
+    // Chance of man getting manipulated: P(Matt and Katelyn in same city)
+    const manipulatedProb = mattIdx !== null && katelynIdx !== null
+      ? pGroupSameCity([mattIdx, katelynIdx])
+      : null;
+
+    // Someone cultivates resilience: P(someone gets their last choice)
+    const lastChoiceProb = (() => {
+      let prob = 0;
+      for (let i = 0; i < N; i++) {
+        const progs = peopleWithPrograms[i].programs;
+        if (progs.length === 0) continue;
+        const lastProb = progs.length <= 3
+          ? [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3][progs.length - 1] / 100
+          : (rankProbs.rank4plus / Math.max(1, progs.length - 3)) / 100;
+        prob += lastProb;
+      }
+      return Math.min(1, prob);
+    })();
+
+    // Chance of Being Well Fed: P(anyone in same city as Elad, Matt, or Tomasz)
+    const feeders = [eladIdx, mattIdx, tomaszIdx].filter((i) => i !== null);
+    const wellFedProb = (() => {
+      if (feeders.length === 0) return null;
+      // P(at least one non-feeder shares a city with at least one feeder)
+      const nonFeeders = [];
+      for (let i = 0; i < N; i++) {
+        if (!feeders.includes(i)) nonFeeders.push(i);
+      }
+      if (nonFeeders.length === 0) return null;
+      // For each non-feeder, P(they share a city with at least one feeder)
+      // Use union bound approx: 1 - product of P(each non-feeder NOT with any feeder)
+      let allAlone = 1;
+      for (const nf of nonFeeders) {
+        // P(nf not in same city as any feeder)
+        let pNotWithAny = 0;
+        for (const loc of allLocations) {
+          const pNf = allLocationProbs[nf][loc] || 0;
+          if (pNf === 0) continue;
+          let noFeeder = 1;
+          for (const f of feeders) {
+            noFeeder *= 1 - (allLocationProbs[f][loc] || 0);
+          }
+          pNotWithAny += pNf * noFeeder;
+        }
+        allAlone *= pNotWithAny;
+      }
+      return 1 - allAlone;
+    })();
+
+    // Yorking It: Katelyn and David same city
+    const yorkingProb = katelynIdx !== null && davidIdx !== null
+      ? pGroupSameCity([katelynIdx, davidIdx])
       : null;
 
     funStats = [
@@ -518,6 +593,42 @@ function App() {
         desc: `P(Elliot and Matt end up in the same city)`,
         value: twinkFearProb,
         show: twinkFearProb !== null,
+      },
+      {
+        label: `David isn't banished`,
+        desc: `P(at least one person ends up in the same city as David)`,
+        value: davidNotBanishedProb,
+        show: davidNotBanishedProb !== null,
+      },
+      {
+        label: `Chance of man getting manipulated`,
+        desc: `P(Matt and Katelyn end up in the same city)`,
+        value: manipulatedProb,
+        show: manipulatedProb !== null,
+      },
+      {
+        label: `Someone cultivates resilience`,
+        desc: `P(someone matches at their last-ranked program)`,
+        value: lastChoiceProb,
+        show: true,
+      },
+      {
+        label: `Ultra-Long Distance-Platonic-Situatafriendship`,
+        desc: `P(everyone matches at different cities)`,
+        value: noOverlapProb,
+        show: true,
+      },
+      {
+        label: `Chance of Being Well Fed`,
+        desc: `P(anyone matches in the same city as Elad, Matt, or Tomasz)`,
+        value: wellFedProb,
+        show: wellFedProb !== null,
+      },
+      {
+        label: `Yorking It`,
+        desc: `P(Katelyn and David end up in the same city)`,
+        value: yorkingProb,
+        show: yorkingProb !== null,
       },
       {
         label: `Chance of Berlin 2027 Trip`,
