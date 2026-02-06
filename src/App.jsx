@@ -39,13 +39,21 @@ function App() {
     if (!name) return;
     setPeople((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name, programs: [] },
+      { id: crypto.randomUUID(), name, programs: [], included: true },
     ]);
     setNewPersonName('');
   }
 
   function removePerson(personId) {
     setPeople((prev) => prev.filter((p) => p.id !== personId));
+  }
+
+  function toggleIncluded(personId) {
+    setPeople((prev) =>
+      prev.map((p) =>
+        p.id === personId ? { ...p, included: !p.included } : p
+      )
+    );
   }
 
   function updatePrograms(personId, updater) {
@@ -153,7 +161,7 @@ function App() {
     return loc.replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
-  const peopleWithPrograms = people.filter((p) => p.programs.length > 0);
+  const peopleWithPrograms = people.filter((p) => p.programs.length > 0 && p.included !== false);
   const hasProgramData = peopleWithPrograms.length > 0;
   const canCalc = peopleWithPrograms.length >= 2;
 
@@ -185,6 +193,7 @@ function App() {
         people: combo.map((i) => peopleWithPrograms[i].name),
         prob: calcGroupSameLocationProb(combo, allLocationProbs, allLocations),
       }));
+      groupResults.sort((a, b) => b.prob - a.prob);
       groupAnalyses.push({ size, results: groupResults });
     }
   }
@@ -250,6 +259,7 @@ function App() {
         }
       }
       if (counts.length > 0) {
+        counts.sort((a, b) => b.prob - a.prob);
         cityAnalyses.push({ location: loc, counts });
       }
     }
@@ -448,6 +458,12 @@ function App() {
         isJoke: true,
       },
     ];
+    // Sort: jokes always last, then by probability descending
+    funStats.sort((a, b) => {
+      if (a.isJoke && !b.isJoke) return 1;
+      if (!a.isJoke && b.isJoke) return -1;
+      return (b.value || 0) - (a.value || 0);
+    });
   }
 
   return (
@@ -480,6 +496,7 @@ function App() {
               person={person}
               onRemovePerson={removePerson}
               onUpdatePrograms={updatePrograms}
+              onToggleIncluded={toggleIncluded}
             />
           ))}
         </div>
@@ -497,13 +514,35 @@ function App() {
           </p>
         ) : (
           <div className="prob-result">
-            <div className="prob-card highlight">
-              <span className="prob-label">Chance everyone ends up in the same location</span>
-              <span className="prob-value">{(everyoneSameProb * 100).toFixed(1)}%</span>
-            </div>
-            <div className="prob-card">
-              <span className="prob-label">Chance no one ends up in the same location</span>
-              <span className="prob-value">{(noOverlapProb * 100).toFixed(1)}%</span>
+            {funStats.length > 0 && (
+              <div className="prob-group fun-stats">
+                <h3 className="prob-group-title fun-title">The Real Stats Nobody Asked For</h3>
+                {funStats.filter((s) => s.show).map((stat, i) => (
+                  <div className={`prob-card fun-card${stat.isJoke ? ' joke' : ''}`} key={i}>
+                    <span className="prob-label">
+                      {stat.label}
+                      {stat.cityLabel && (
+                        <span className="fun-city"> ({stat.cityLabel})</span>
+                      )}
+                    </span>
+                    <span className="prob-value fun-value">
+                      {stat.isJoke ? '100%' : `${(stat.value * 100).toFixed(1)}%`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="prob-group">
+              <h3 className="prob-group-title">Overall</h3>
+              <div className="prob-card highlight">
+                <span className="prob-label">Chance everyone ends up in the same location</span>
+                <span className="prob-value">{(everyoneSameProb * 100).toFixed(1)}%</span>
+              </div>
+              <div className="prob-card">
+                <span className="prob-label">Chance no one ends up in the same location</span>
+                <span className="prob-value">{(noOverlapProb * 100).toFixed(1)}%</span>
+              </div>
             </div>
 
             {groupAnalyses.map(({ size, results }) => (
@@ -538,25 +577,6 @@ function App() {
                         <span className="prob-value">{(prob * 100).toFixed(1)}%</span>
                       </div>
                     ))}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {funStats.length > 0 && (
-              <div className="prob-group fun-stats">
-                <h3 className="prob-group-title fun-title">The Real Stats Nobody Asked For</h3>
-                {funStats.filter((s) => s.show).map((stat, i) => (
-                  <div className={`prob-card fun-card${stat.isJoke ? ' joke' : ''}`} key={i}>
-                    <span className="prob-label">
-                      {stat.label}
-                      {stat.cityLabel && (
-                        <span className="fun-city"> ({stat.cityLabel})</span>
-                      )}
-                    </span>
-                    <span className="prob-value fun-value">
-                      {stat.isJoke ? '100%' : `${(stat.value * 100).toFixed(1)}%`}
-                    </span>
                   </div>
                 ))}
               </div>

@@ -16,7 +16,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import SortableProgram from './SortableProgram';
 
-export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms }) {
+export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms, onToggleIncluded }) {
   const [newProgram, setNewProgram] = useState('');
   const [newLocation, setNewLocation] = useState('');
 
@@ -56,8 +56,15 @@ export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms 
   }
 
   return (
-    <div className="person-column">
+    <div className={`person-column${person.included === false ? ' excluded' : ''}`}>
       <div className="person-header">
+        <label className="include-toggle" title={person.included === false ? 'Excluded from calculations' : 'Included in calculations'}>
+          <input
+            type="checkbox"
+            checked={person.included !== false}
+            onChange={() => onToggleIncluded(person.id)}
+          />
+        </label>
         <h3 className="person-name">{person.name}</h3>
         <button
           className="remove-person-btn"
