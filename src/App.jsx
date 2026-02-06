@@ -599,8 +599,11 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>RatMatch</h1>
-        <p>Add people and build each person's rank list.</p>
+        <div className="logo-row">
+          <img src={`${import.meta.env.BASE_URL}rat.svg`} alt="RatMatch logo" className="logo-icon" />
+          <h1>RatMatch</h1>
+        </div>
+        <p>Where your rank list meets cold, hard probability.</p>
       </header>
 
       <ProbabilitySliders rankProbs={rankProbs} setRankProbs={setRankProbs} />
