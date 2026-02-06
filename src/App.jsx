@@ -38,6 +38,49 @@ function App() {
     );
   }
 
+  // For a person, compute { location -> probability } based on rank and slider values
+  function getLocationProbs(programs) {
+    const probs = {};
+    const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3];
+    const numFourPlus = Math.max(0, programs.length - 3);
+    const fourPlusEach = numFourPlus > 0 ? rankProbs.rank4plus / numFourPlus : 0;
+
+    programs.forEach((program, i) => {
+      const loc = program.location.toLowerCase().trim();
+      const p = i < 3 ? rankValues[i] / 100 : fourPlusEach / 100;
+      probs[loc] = (probs[loc] || 0) + p;
+    });
+    return probs;
+  }
+
+  // P(all people end up at same location) = sum over locations of product of each person's prob
+  function calcSameLocationProb() {
+    const peopleWithPrograms = people.filter((p) => p.programs.length > 0);
+    if (peopleWithPrograms.length < 2) return null;
+
+    const allLocationProbs = peopleWithPrograms.map((p) => getLocationProbs(p.programs));
+
+    // Collect all locations across all people
+    const allLocations = new Set();
+    allLocationProbs.forEach((probs) => {
+      Object.keys(probs).forEach((loc) => allLocations.add(loc));
+    });
+
+    let totalProb = 0;
+    for (const loc of allLocations) {
+      let product = 1;
+      for (const personProbs of allLocationProbs) {
+        product *= personProbs[loc] || 0;
+      }
+      totalProb += product;
+    }
+
+    return totalProb;
+  }
+
+  const sameLocationProb = calcSameLocationProb();
+  const hasProgramData = people.some((p) => p.programs.length > 0);
+
   return (
     <div className="app">
       <header className="app-header">
@@ -75,12 +118,21 @@ function App() {
 
       <section className="probabilities-section">
         <h2>Match Probabilities</h2>
-        {people.length === 0 || people.every((p) => p.programs.length === 0) ? (
+        {!hasProgramData ? (
           <p className="empty-message">
             Add people and programs to see probabilities.
           </p>
+        ) : sameLocationProb === null ? (
+          <p className="empty-message">
+            Add at least 2 people with programs to calculate probabilities.
+          </p>
         ) : (
-          <p className="empty-message">Probability calculations coming soon.</p>
+          <div className="prob-result">
+            <div className="prob-card">
+              <span className="prob-label">Chance everyone ends up in the same location</span>
+              <span className="prob-value">{(sameLocationProb * 100).toFixed(1)}%</span>
+            </div>
+          </div>
         )}
       </section>
     </div>
