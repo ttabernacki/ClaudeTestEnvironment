@@ -18,6 +18,7 @@ import SortableProgram from './SortableProgram';
 
 export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms }) {
   const [newProgram, setNewProgram] = useState('');
+  const [newLocation, setNewLocation] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -40,12 +41,14 @@ export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms 
   function handleAddProgram(e) {
     e.preventDefault();
     const name = newProgram.trim();
-    if (!name) return;
+    const location = newLocation.trim();
+    if (!name || !location) return;
     onUpdatePrograms(person.id, (prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name },
+      { id: crypto.randomUUID(), name, location },
     ]);
     setNewProgram('');
+    setNewLocation('');
   }
 
   function handleRemoveProgram(programId) {
@@ -70,8 +73,15 @@ export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms 
           type="text"
           value={newProgram}
           onChange={(e) => setNewProgram(e.target.value)}
-          placeholder="Add program…"
+          placeholder="Program name…"
           aria-label={`Add program for ${person.name}`}
+        />
+        <input
+          type="text"
+          value={newLocation}
+          onChange={(e) => setNewLocation(e.target.value)}
+          placeholder="Location…"
+          aria-label={`Program location for ${person.name}`}
         />
         <button type="submit">Add</button>
       </form>
@@ -93,6 +103,7 @@ export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms 
                   id={program.id}
                   rank={index + 1}
                   name={program.name}
+                  location={program.location}
                   onRemove={handleRemoveProgram}
                 />
               ))}

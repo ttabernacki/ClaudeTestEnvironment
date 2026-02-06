@@ -117,6 +117,7 @@
 /* ── Add Program Form (inside column) ── */
 .add-program-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.375rem;
   margin-bottom: 0.75rem;
 }
@@ -210,10 +211,24 @@
   cursor: grabbing;
 }
 
-.program-name {
+.program-info {
   flex: 1;
-  font-size: 0.875rem;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.program-name {
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-location {
+  font-size: 0.75rem;
+  color: #6b7280;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

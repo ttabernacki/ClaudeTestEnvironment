@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-export default function SortableProgram({ id, rank, name, onRemove }) {
+export default function SortableProgram({ id, rank, name, location, onRemove }) {
   const {
     attributes,
     listeners,
@@ -23,7 +23,10 @@ export default function SortableProgram({ id, rank, name, onRemove }) {
       <button className="drag-handle" {...attributes} {...listeners} aria-label="Drag to reorder">
         ⠿
       </button>
-      <span className="program-name">{name}</span>
+      <span className="program-info">
+        <span className="program-name">{name}</span>
+        <span className="program-location">{location}</span>
+      </span>
       <button className="remove-btn" onClick={() => onRemove(id)} aria-label={`Remove ${name}`}>
         ×
       </button>
