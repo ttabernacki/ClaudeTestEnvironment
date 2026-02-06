@@ -243,15 +243,112 @@ function App() {
     const bestCity = calcMostLikelySharedCity(allLocationProbs, allLocations);
     const names = peopleWithPrograms.map((p) => p.name);
 
-    // P(at least one person alone)
-    // Union bound: P(A1 ∪ A2 ∪ ...) — use inclusion-exclusion with pairs for better approx
-    // For small N, just use: 1 - P(no one alone) ≈ sum(pAlone) - sum(pAlone_i * pAlone_j) + ...
-    // Simple approach: sum individual - we'll be approximate and it's for laughs
     const anyoneAlone = Math.min(1, pAlone.reduce((s, p) => s + p, 0));
+
+    // Helper: find person index by name (case-insensitive)
+    function findPerson(name) {
+      const idx = peopleWithPrograms.findIndex(
+        (p) => p.name.toLowerCase() === name.toLowerCase()
+      );
+      return idx >= 0 ? idx : null;
+    }
+
+    // Helper: P(a set of people all in the same city)
+    function pGroupSameCity(indices) {
+      if (indices.some((i) => i === null)) return null;
+      return calcGroupSameLocationProb(indices, allLocationProbs, allLocations);
+    }
+
+    // Helper: P(a set of people all at the same PROGRAM — ranked identically)
+    // For professionalism: P(any subset of given people match at the same program)
+    function pSameProgramAny(indices) {
+      if (indices.some((i) => i === null)) return null;
+      const valid = indices.filter((i) => i !== null);
+      if (valid.length < 2) return null;
+      // For each program name, P(all of them match there)
+      // Collect all program names across valid people
+      const programsByPerson = valid.map((idx) => {
+        const progs = peopleWithPrograms[idx].programs;
+        const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3];
+        const numFourPlus = Math.max(0, progs.length - 3);
+        const fourPlusEach = numFourPlus > 0 ? rankProbs.rank4plus / numFourPlus : 0;
+        const map = {};
+        progs.forEach((prog, i) => {
+          const key = prog.name.toLowerCase().trim();
+          const p = i < 3 ? rankValues[i] / 100 : fourPlusEach / 100;
+          map[key] = (map[key] || 0) + p;
+        });
+        return map;
+      });
+      const allPrograms = new Set();
+      programsByPerson.forEach((m) => Object.keys(m).forEach((k) => allPrograms.add(k)));
+      let total = 0;
+      for (const prog of allPrograms) {
+        let product = 1;
+        for (const personProgs of programsByPerson) {
+          product *= personProgs[prog] || 0;
+        }
+        total += product;
+      }
+      return total;
+    }
+
+    // Helper: P(given people both in a specific city)
+    function pGroupAtCity(indices, cityName) {
+      if (indices.some((i) => i === null)) return null;
+      const loc = cityName.toLowerCase().trim();
+      let product = 1;
+      for (const idx of indices) {
+        product *= allLocationProbs[idx][loc] || 0;
+      }
+      return product;
+    }
+
+    // Accidental resident orgy: P(3+ people in same city), or P(2+ if only 2)
+    const orgyProb = (() => {
+      // Sum over all locations: P(3+ at that location), or if N<3, P(2+ at location)
+      const minK = Math.min(3, N);
+      let prob = 0;
+      for (const loc of allLocations) {
+        const dp = calcExactlyKAtLocation(loc, allLocationProbs);
+        for (let k = minK; k <= N; k++) {
+          prob += dp[k];
+        }
+      }
+      return Math.min(1, prob);
+    })();
+
+    // Find specific people
+    const tomaszIdx = findPerson('Tomasz');
+    const mattIdx = findPerson('Matt');
+    const elliotIdx = findPerson('Elliot');
+    const katelynIdx = findPerson('Katelyn');
+    const kateIdx = findPerson('Kate');
+
+    // Professionalism violation: increases with Tomasz, Matt, Elliot at same program
+    const profGroup = [tomaszIdx, mattIdx, elliotIdx].filter((i) => i !== null);
+    const profViolationProb = profGroup.length >= 2
+      ? pSameProgramAny(profGroup)
+      : null;
+
+    // Voyeurism: P increases with Katelyn and Kate same city
+    const voyeurismProb = katelynIdx !== null && kateIdx !== null
+      ? pGroupSameCity([katelynIdx, kateIdx])
+      : null;
+
+    // Townhall: P increases with Katelyn and Kate in Cleveland
+    const townhallProb = katelynIdx !== null && kateIdx !== null
+      ? pGroupAtCity([katelynIdx, kateIdx], 'cleveland')
+      : null;
+
+    // Fear level of twinks: Elliot and Matt same city
+    const twinkFearProb = elliotIdx !== null && mattIdx !== null
+      ? pGroupSameCity([elliotIdx, mattIdx])
+      : null;
 
     funStats = [
       {
-        label: `Chance of a "long-distance situationship"`,
+        label: `Chance we all drop out of medicine and move to Berlin`,
         value: noOverlapProb,
         show: true,
       },
@@ -261,8 +358,8 @@ function App() {
         show: true,
       },
       {
-        label: `Chance of an "accidental" co-resident hookup`,
-        value: atLeastOnePairProb,
+        label: `Chance of accidental resident orgy`,
+        value: orgyProb,
         show: true,
       },
       {
@@ -271,12 +368,7 @@ function App() {
         show: true,
       },
       {
-        label: `Chance of a "we should be roommates!" text you'll regret`,
-        value: atLeastOnePairProb,
-        show: N >= 2,
-      },
-      {
-        label: `Most likely city for the group meltdown`,
+        label: `Officially Designated Rat Kingdom`,
         value: bestCity.prob,
         cityLabel: bestCity.location ? displayLocation(bestCity.location) : null,
         show: bestCity.location != null,
@@ -290,8 +382,6 @@ function App() {
         label: `Chance of a third wheel situation`,
         value: N >= 3
           ? (() => {
-              // P(exactly 2 people together and 1+ alone)
-              // Approximation: sum over pairs P(pair same city) * P(others not there)
               let prob = 0;
               const pairs = combinations(N, 2);
               for (const [a, b] of pairs) {
@@ -312,7 +402,27 @@ function App() {
         show: N >= 3,
       },
       {
-        label: `Chance of drunk Match Day texts you'll regret`,
+        label: `Chance of professionalism violation`,
+        value: profViolationProb,
+        show: profViolationProb !== null,
+      },
+      {
+        label: `Chance of voyeurism`,
+        value: voyeurismProb,
+        show: voyeurismProb !== null,
+      },
+      {
+        label: `Chance of going to Townhall`,
+        value: townhallProb,
+        show: townhallProb !== null,
+      },
+      {
+        label: `Fear level of twinks`,
+        value: twinkFearProb,
+        show: twinkFearProb !== null,
+      },
+      {
+        label: `Chance of Berlin 2027 Trip`,
         value: 1.0,
         show: true,
         isJoke: true,
