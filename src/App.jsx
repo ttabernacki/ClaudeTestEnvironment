@@ -351,7 +351,6 @@ function App() {
   let funStats = [];
   if (canCalc) {
     const pAlone = calcSomeoneAloneProb(allLocationProbs, allLocations);
-    const atLeastOnePairProb = 1 - noOverlapProb;
     const bestCity = calcMostLikelySharedCity(allLocationProbs, allLocations);
     const names = peopleWithPrograms.map((p) => p.name);
 
@@ -458,24 +457,6 @@ function App() {
       ? pGroupSameCity([elliotIdx, mattIdx])
       : null;
 
-    // P(at least 2 people alone in different cities — the group chat is all that's left)
-    const scatteredProb = noOverlapProb;
-
-    // P(someone matches at their last choice)
-    const lastChoiceProb = (() => {
-      let prob = 0;
-      for (let i = 0; i < N; i++) {
-        const progs = peopleWithPrograms[i].programs;
-        if (progs.length === 0) continue;
-        const lastLoc = progs[progs.length - 1].location.toLowerCase().trim();
-        const lastProb = progs.length <= 3
-          ? [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3][progs.length - 1] / 100
-          : (rankProbs.rank4plus / Math.max(1, progs.length - 3)) / 100;
-        prob += lastProb;
-      }
-      return Math.min(1, prob);
-    })();
-
     funStats = [
       {
         label: `Chance we all drop out of medicine and move to Berlin`,
@@ -513,48 +494,6 @@ function App() {
         desc: `P(${names[0] || 'first person'} ends up in a city with none of you)`,
         value: pAlone[0],
         show: pAlone.length > 0,
-      },
-      {
-        label: `Chance of a third wheel situation`,
-        desc: `P(exactly 2 people in a city while someone else is alone)`,
-        value: N >= 3
-          ? (() => {
-              let prob = 0;
-              const pairs = combinations(N, 2);
-              for (const [a, b] of pairs) {
-                for (const loc of allLocations) {
-                  const pA = allLocationProbs[a][loc] || 0;
-                  const pB = allLocationProbs[b][loc] || 0;
-                  let othersAway = 1;
-                  for (let j = 0; j < N; j++) {
-                    if (j === a || j === b) continue;
-                    othersAway *= 1 - (allLocationProbs[j][loc] || 0);
-                  }
-                  prob += pA * pB * othersAway;
-                }
-              }
-              return prob;
-            })()
-          : 0,
-        show: N >= 3,
-      },
-      {
-        label: `Chance the group chat becomes long-distance therapy`,
-        desc: `P(everyone in a different city)`,
-        value: scatteredProb,
-        show: N >= 3,
-      },
-      {
-        label: `Chance someone rage-applies to a fellowship immediately`,
-        desc: `P(someone matches at their last-ranked program)`,
-        value: lastChoiceProb,
-        show: true,
-      },
-      {
-        label: `Chance of "I'm literally moving to your city" energy`,
-        desc: `P(at least one pair in the same city)`,
-        value: atLeastOnePairProb,
-        show: true,
       },
       {
         label: `Chance of professionalism violation`,
