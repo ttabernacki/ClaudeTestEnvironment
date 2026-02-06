@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import PersonColumn from './components/PersonColumn';
+import ProbabilitySliders from './components/ProbabilitySliders';
 import './App.css';
 
 function App() {
   const [people, setPeople] = useState([]);
   const [newPersonName, setNewPersonName] = useState('');
+  const [rankProbs, setRankProbs] = useState({
+    rank1: 50,
+    rank2: 25,
+    rank3: 15,
+    rank4plus: 10,
+  });
 
   function addPerson(e) {
     e.preventDefault();
@@ -37,6 +44,8 @@ function App() {
         <h1>Residency Match Calculator</h1>
         <p>Add people and build each person's rank list.</p>
       </header>
+
+      <ProbabilitySliders rankProbs={rankProbs} setRankProbs={setRankProbs} />
 
       <form className="add-person-form" onSubmit={addPerson}>
         <input
