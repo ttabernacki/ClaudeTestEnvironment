@@ -407,6 +407,40 @@
   text-align: center;
 }
 
+/* ── Fun Stats ── */
+.fun-stats {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 2px dashed #e5e7eb;
+}
+
+.fun-title {
+  color: #a855f7;
+}
+
+.fun-card {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+.fun-card.joke {
+  background: #fef3c7;
+  border-color: #fde68a;
+}
+
+.fun-value {
+  color: #a855f7;
+}
+
+.fun-card.joke .fun-value {
+  color: #d97706;
+}
+
+.fun-city {
+  font-weight: 600;
+  color: #a855f7;
+}
+
 /* ── Shared ── */
 .empty-message {
   color: #9ca3af;

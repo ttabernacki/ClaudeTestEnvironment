@@ -169,6 +169,54 @@ function App() {
     }
   }
 
+  // P(at least one person ends up alone — no one else in their city)
+  // = 1 - P(every person shares a city with at least one other person)
+  // Computed via: for each person, P(person i is alone) using other people's probs
+  function calcSomeoneAloneProb(allLocationProbs, allLocations) {
+    const n = allLocationProbs.length;
+    // P(person i is alone) = sum over locations L of:
+    //   P(i at L) * product over j≠i of P(j NOT at L)
+    // Then use inclusion-exclusion... but that's complex.
+    // Simpler: enumerate all location assignments (only feasible for small n).
+    // For now, compute per-person P(alone) and use union bound approximation.
+    // Actually, let's compute it exactly for each person and use inclusion-exclusion.
+
+    // For each person, P(person i alone at their location)
+    const pAlone = [];
+    for (let i = 0; i < n; i++) {
+      let prob = 0;
+      for (const loc of allLocations) {
+        const pIatLoc = allLocationProbs[i][loc] || 0;
+        if (pIatLoc === 0) continue;
+        let othersAwayProduct = 1;
+        for (let j = 0; j < n; j++) {
+          if (j === i) continue;
+          othersAwayProduct *= 1 - (allLocationProbs[j][loc] || 0);
+        }
+        prob += pIatLoc * othersAwayProduct;
+      }
+      pAlone.push(prob);
+    }
+    return pAlone;
+  }
+
+  // Find the most likely city for the group (highest P(everyone there))
+  function calcMostLikelySharedCity(allLocationProbs, allLocations) {
+    let bestLoc = null;
+    let bestProb = 0;
+    for (const loc of allLocations) {
+      let product = 1;
+      for (const probs of allLocationProbs) {
+        product *= probs[loc] || 0;
+      }
+      if (product > bestProb) {
+        bestProb = product;
+        bestLoc = loc;
+      }
+    }
+    return { location: bestLoc, prob: bestProb };
+  }
+
   // Per-city analyses: for each location, P(exactly k people end up there)
   const cityAnalyses = [];
   if (canCalc) {
@@ -185,6 +233,91 @@ function App() {
         cityAnalyses.push({ location: loc, counts });
       }
     }
+  }
+
+  // Fun stats
+  let funStats = [];
+  if (canCalc) {
+    const pAlone = calcSomeoneAloneProb(allLocationProbs, allLocations);
+    const atLeastOnePairProb = 1 - noOverlapProb;
+    const bestCity = calcMostLikelySharedCity(allLocationProbs, allLocations);
+    const names = peopleWithPrograms.map((p) => p.name);
+
+    // P(at least one person alone)
+    // Union bound: P(A1 ∪ A2 ∪ ...) — use inclusion-exclusion with pairs for better approx
+    // For small N, just use: 1 - P(no one alone) ≈ sum(pAlone) - sum(pAlone_i * pAlone_j) + ...
+    // Simple approach: sum individual - we'll be approximate and it's for laughs
+    const anyoneAlone = Math.min(1, pAlone.reduce((s, p) => s + p, 0));
+
+    funStats = [
+      {
+        label: `Chance of a "long-distance situationship"`,
+        value: noOverlapProb,
+        show: true,
+      },
+      {
+        label: `Chance someone's hate-swiping Hinge alone in a new city`,
+        value: anyoneAlone,
+        show: true,
+      },
+      {
+        label: `Chance of an "accidental" co-resident hookup`,
+        value: atLeastOnePairProb,
+        show: true,
+      },
+      {
+        label: `Chance you'll all be fighting over the same 1-bedroom apartment`,
+        value: everyoneSameProb,
+        show: true,
+      },
+      {
+        label: `Chance of a "we should be roommates!" text you'll regret`,
+        value: atLeastOnePairProb,
+        show: N >= 2,
+      },
+      {
+        label: `Most likely city for the group meltdown`,
+        value: bestCity.prob,
+        cityLabel: bestCity.location ? displayLocation(bestCity.location) : null,
+        show: bestCity.location != null,
+      },
+      {
+        label: `Chance ${names.length >= 2 ? names[0] + ' is sobbing alone on Match Day' : 'someone is sobbing alone'}`,
+        value: pAlone[0],
+        show: pAlone.length > 0,
+      },
+      {
+        label: `Chance of a third wheel situation`,
+        value: N >= 3
+          ? (() => {
+              // P(exactly 2 people together and 1+ alone)
+              // Approximation: sum over pairs P(pair same city) * P(others not there)
+              let prob = 0;
+              const pairs = combinations(N, 2);
+              for (const [a, b] of pairs) {
+                for (const loc of allLocations) {
+                  const pA = allLocationProbs[a][loc] || 0;
+                  const pB = allLocationProbs[b][loc] || 0;
+                  let othersAway = 1;
+                  for (let j = 0; j < N; j++) {
+                    if (j === a || j === b) continue;
+                    othersAway *= 1 - (allLocationProbs[j][loc] || 0);
+                  }
+                  prob += pA * pB * othersAway;
+                }
+              }
+              return prob;
+            })()
+          : 0,
+        show: N >= 3,
+      },
+      {
+        label: `Chance of drunk Match Day texts you'll regret`,
+        value: 1.0,
+        show: true,
+        isJoke: true,
+      },
+    ];
   }
 
   return (
@@ -275,6 +408,25 @@ function App() {
                         <span className="prob-value">{(prob * 100).toFixed(1)}%</span>
                       </div>
                     ))}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {funStats.length > 0 && (
+              <div className="prob-group fun-stats">
+                <h3 className="prob-group-title fun-title">The Real Stats Nobody Asked For</h3>
+                {funStats.filter((s) => s.show).map((stat, i) => (
+                  <div className={`prob-card fun-card${stat.isJoke ? ' joke' : ''}`} key={i}>
+                    <span className="prob-label">
+                      {stat.label}
+                      {stat.cityLabel && (
+                        <span className="fun-city"> ({stat.cityLabel})</span>
+                      )}
+                    </span>
+                    <span className="prob-value fun-value">
+                      {stat.isJoke ? '100%' : `${(stat.value * 100).toFixed(1)}%`}
+                    </span>
                   </div>
                 ))}
               </div>
