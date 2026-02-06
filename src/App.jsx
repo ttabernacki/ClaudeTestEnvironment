@@ -106,6 +106,33 @@ function App() {
     return result;
   }
 
+  // P(exactly k out of N independent people end up at a given location)
+  // Uses DP over independent Bernoulli trials
+  function calcExactlyKAtLocation(loc, allLocationProbs) {
+    const n = allLocationProbs.length;
+    // dp[k] = P(exactly k of the first i people are at loc)
+    let dp = new Array(n + 1).fill(0);
+    dp[0] = 1;
+
+    for (let i = 0; i < n; i++) {
+      const pAt = allLocationProbs[i][loc] || 0;
+      const pNot = 1 - pAt;
+      const newDp = new Array(n + 1).fill(0);
+      for (let k = 0; k <= i; k++) {
+        newDp[k] += dp[k] * pNot;
+        newDp[k + 1] += dp[k] * pAt;
+      }
+      dp = newDp;
+    }
+
+    return dp;
+  }
+
+  // Capitalize first letter of each word for display
+  function displayLocation(loc) {
+    return loc.replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
   const peopleWithPrograms = people.filter((p) => p.programs.length > 0);
   const hasProgramData = peopleWithPrograms.length > 0;
   const canCalc = peopleWithPrograms.length >= 2;
@@ -139,6 +166,24 @@ function App() {
         prob: calcGroupSameLocationProb(combo, allLocationProbs, allLocations),
       }));
       groupAnalyses.push({ size, results: groupResults });
+    }
+  }
+
+  // Per-city analyses: for each location, P(exactly k people end up there)
+  const cityAnalyses = [];
+  if (canCalc) {
+    const sortedLocations = [...allLocations].sort();
+    for (const loc of sortedLocations) {
+      const dp = calcExactlyKAtLocation(loc, allLocationProbs);
+      const counts = [];
+      for (let k = 1; k <= N; k++) {
+        if (dp[k] > 0.00005) {
+          counts.push({ k, prob: dp[k] });
+        }
+      }
+      if (counts.length > 0) {
+        cityAnalyses.push({ location: loc, counts });
+      }
     }
   }
 
@@ -211,6 +256,29 @@ function App() {
                 ))}
               </div>
             ))}
+
+            {cityAnalyses.length > 0 && (
+              <div className="prob-group">
+                <h3 className="prob-group-title">By City</h3>
+                {cityAnalyses.map(({ location, counts }) => (
+                  <div key={location} className="city-analysis">
+                    <h4 className="city-name">{displayLocation(location)}</h4>
+                    {counts.map(({ k, prob }) => (
+                      <div className="prob-card" key={k}>
+                        <span className="prob-label">
+                          {k === N
+                            ? 'Everyone'
+                            : k === 1
+                              ? 'Exactly 1 person'
+                              : `Exactly ${k} people`}
+                        </span>
+                        <span className="prob-value">{(prob * 100).toFixed(1)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>
