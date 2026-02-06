@@ -478,9 +478,10 @@ function App() {
       return 1 - pDavidAlone;
     })();
 
-    // Chance of man getting manipulated: P(Matt and Katelyn in same city)
-    const manipulatedProb = mattIdx !== null && katelynIdx !== null
-      ? pGroupSameCity([mattIdx, katelynIdx])
+    // Chance of man getting manipulated: P(Elliot, Kate, and Katelyn in same city)
+    const manipGroup = [elliotIdx, kateIdx, katelynIdx].filter((i) => i !== null);
+    const manipulatedProb = manipGroup.length >= 2
+      ? pGroupSameCity(manipGroup)
       : null;
 
     // Someone cultivates resilience: P(someone gets their last choice)
@@ -602,7 +603,7 @@ function App() {
       },
       {
         label: `Chance of man getting manipulated`,
-        desc: `P(Matt and Katelyn end up in the same city)`,
+        desc: `P(Elliot, Kate, and Katelyn end up in the same city)`,
         value: manipulatedProb,
         show: manipulatedProb !== null,
       },
