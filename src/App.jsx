@@ -603,7 +603,12 @@ function App() {
           <img src={`${import.meta.env.BASE_URL}rat.svg`} alt="RatMatch logo" className="logo-icon" />
           <h1>RatMatch</h1>
         </div>
-        <p>Where your rank list meets cold, hard probability.</p>
+        <div className="ticker-wrap">
+          <div className="ticker">
+            <span>Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat&nbsp;</span>
+            <span>Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat Rat&nbsp;</span>
+          </div>
+        </div>
       </header>
 
       <ProbabilitySliders rankProbs={rankProbs} setRankProbs={setRankProbs} />

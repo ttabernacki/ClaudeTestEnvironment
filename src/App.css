@@ -37,11 +37,39 @@
   filter: drop-shadow(0 0 20px rgba(255, 45, 120, 0.3));
 }
 
-.app-header p {
-  color: #94a3b8;
-  margin: 0.25rem 0 0;
-  font-size: 0.95rem;
-  letter-spacing: 0.01em;
+.ticker-wrap {
+  overflow: hidden;
+  max-width: 480px;
+  margin: 0.5rem auto 0;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.ticker {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker-scroll 12s linear infinite;
+}
+
+.ticker span {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #ff2d78, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0.6;
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 /* ── Probability Sliders ── */
