@@ -4,12 +4,12 @@ import ProbabilitySliders from './components/ProbabilitySliders';
 import './App.css';
 
 const DEFAULT_RANK_PROBS = {
-  rank1: 45,
-  rank2: 20,
-  rank3: 13,
-  rank4: 8,
+  rank1: 54,
+  rank2: 17,
+  rank3: 11,
+  rank4: 7,
   rank5plus: 9,
-  unmatched: 5,
+  unmatched: 2,
 };
 
 const DEFAULT_PEOPLE = [
