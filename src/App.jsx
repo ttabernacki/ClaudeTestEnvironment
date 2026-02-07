@@ -385,7 +385,8 @@ function App() {
     const bestCity = calcMostLikelySharedCity(allLocationProbs, allLocations);
     const names = peopleWithPrograms.map((p) => p.name);
 
-    const anyoneAlone = Math.min(1, pAlone.reduce((s, p) => s + p, 0));
+    // Approximate via independence: 1 - product of (1 - P(person i alone))
+    const anyoneAlone = 1 - pAlone.reduce((prod, p) => prod * (1 - p), 1);
 
     // Helper: find person index by name (case-insensitive)
     function findPerson(name) {
