@@ -266,6 +266,23 @@ function App() {
   let allLocations = new Set();
   if (canCalc) {
     allLocationProbs = peopleWithPrograms.map((p) => getLocationProbs(p.programs));
+
+    // Couples match kludge: if Elad matches NYC, Matt is 100% NYC.
+    // Adjusted Matt probs = P(Elad NYC) * {nyc:1} + P(Elad !NYC) * Matt's normal probs
+    const eladIdx = peopleWithPrograms.findIndex((p) => p.name.toLowerCase() === 'elad');
+    const mattIdx = peopleWithPrograms.findIndex((p) => p.name.toLowerCase() === 'matt');
+    if (eladIdx >= 0 && mattIdx >= 0) {
+      const pEladNYC = allLocationProbs[eladIdx]['nyc'] || 0;
+      const pEladNotNYC = 1 - pEladNYC;
+      const mattNormal = allLocationProbs[mattIdx];
+      const mattAdjusted = {};
+      for (const loc of Object.keys(mattNormal)) {
+        mattAdjusted[loc] = pEladNotNYC * mattNormal[loc];
+      }
+      mattAdjusted['nyc'] = pEladNYC * 1.0 + pEladNotNYC * (mattNormal['nyc'] || 0);
+      allLocationProbs[mattIdx] = mattAdjusted;
+    }
+
     allLocationProbs.forEach((probs) => {
       Object.keys(probs).forEach((loc) => allLocations.add(loc));
     });
