@@ -577,12 +577,6 @@ function App() {
         show: true,
       },
       {
-        label: `Chance you'll all be fighting over the same 1-bedroom apartment`,
-        desc: `P(everyone in the same city)`,
-        value: everyoneSameProb,
-        show: true,
-      },
-      {
         label: `Officially Designated Rat Kingdom`,
         desc: `City most likely to contain the entire group`,
         value: bestCity.prob,
