@@ -328,6 +328,40 @@ function App() {
     return { location: bestLoc, prob: bestProb };
   }
 
+  // Exact probability via recursive enumeration of all location assignments.
+  // predicate(locationCounts) is tested at each leaf to determine if it's a "hit".
+  function calcExactByEnumeration(allLocationProbs, allLocations, predicate) {
+    const N = allLocationProbs.length;
+    const locations = [...allLocations];
+
+    const personLocs = allLocationProbs.map((probs) => {
+      const entries = [];
+      for (const loc of locations) {
+        const p = probs[loc] || 0;
+        if (p > 0) entries.push([loc, p]);
+      }
+      return entries;
+    });
+
+    const counts = {};
+
+    function recurse(idx) {
+      if (idx === N) {
+        return predicate(counts) ? 1 : 0;
+      }
+      let prob = 0;
+      for (const [loc, p] of personLocs[idx]) {
+        counts[loc] = (counts[loc] || 0) + 1;
+        prob += p * recurse(idx + 1);
+        counts[loc]--;
+        if (counts[loc] === 0) delete counts[loc];
+      }
+      return prob;
+    }
+
+    return recurse(0);
+  }
+
   // Per-city analyses: for each location, P(exactly k people end up there)
   const cityAnalyses = [];
   if (canCalc) {
@@ -354,7 +388,10 @@ function App() {
     const bestCity = calcMostLikelySharedCity(allLocationProbs, allLocations);
     const names = peopleWithPrograms.map((p) => p.name);
 
-    const anyoneAlone = Math.min(1, pAlone.reduce((s, p) => s + p, 0));
+    const anyoneAlone = calcExactByEnumeration(
+      allLocationProbs, allLocations,
+      (counts) => Object.values(counts).some((c) => c === 1)
+    );
 
     // Helper: find person index by name (case-insensitive)
     function findPerson(name) {
@@ -415,19 +452,12 @@ function App() {
       return product;
     }
 
-    // Accidental resident orgy: P(3+ people in same city), or P(2+ if only 2)
-    const orgyProb = (() => {
-      // Sum over all locations: P(3+ at that location), or if N<3, P(2+ at location)
-      const minK = Math.min(3, N);
-      let prob = 0;
-      for (const loc of allLocations) {
-        const dp = calcExactlyKAtLocation(loc, allLocationProbs);
-        for (let k = minK; k <= N; k++) {
-          prob += dp[k];
-        }
-      }
-      return Math.min(1, prob);
-    })();
+    // Accidental resident orgy: P(some city has 3+ people), or 2+ if only 2
+    const minK = Math.min(3, N);
+    const orgyProb = calcExactByEnumeration(
+      allLocationProbs, allLocations,
+      (counts) => Object.values(counts).some((c) => c >= minK)
+    );
 
     // Find specific people
     const tomaszIdx = findPerson('Tomasz');
@@ -485,17 +515,18 @@ function App() {
       : null;
 
     // Someone cultivates resilience: P(someone gets their last choice)
+    // Each person matches independently, so P(anyone) = 1 - Π(1 - pᵢ)
     const lastChoiceProb = (() => {
-      let prob = 0;
+      let noOneLast = 1;
       for (let i = 0; i < N; i++) {
         const progs = peopleWithPrograms[i].programs;
         if (progs.length === 0) continue;
         const lastProb = progs.length <= 3
           ? [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3][progs.length - 1] / 100
           : (rankProbs.rank4plus / Math.max(1, progs.length - 3)) / 100;
-        prob += lastProb;
+        noOneLast *= (1 - lastProb);
       }
-      return Math.min(1, prob);
+      return 1 - noOneLast;
     })();
 
     // Chance of Being Well Fed: P(anyone in same city as Elad, Matt, or Tomasz)
@@ -535,12 +566,6 @@ function App() {
 
     funStats = [
       {
-        label: `Chance we all drop out of medicine and move to Berlin`,
-        desc: `P(no two people in the same city)`,
-        value: noOverlapProb,
-        show: true,
-      },
-      {
         label: `Chance someone's hate-swiping Hinge alone in a new city`,
         desc: `P(at least one person has no one else in their city)`,
         value: anyoneAlone,
@@ -573,7 +598,7 @@ function App() {
       },
       {
         label: `Chance of professionalism violation`,
-        desc: `P(Tomasz, Matt, and/or Elliot match at the same program)`,
+        desc: `P(Tomasz, Matt, and Elliot match at the same program)`,
         value: profViolationProb,
         show: profViolationProb !== null,
       },
