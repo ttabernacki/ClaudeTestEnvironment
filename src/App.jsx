@@ -4,10 +4,12 @@ import ProbabilitySliders from './components/ProbabilitySliders';
 import './App.css';
 
 const DEFAULT_RANK_PROBS = {
-  rank1: 50,
-  rank2: 25,
-  rank3: 15,
-  rank4plus: 10,
+  rank1: 45,
+  rank2: 20,
+  rank3: 13,
+  rank4: 8,
+  rank5plus: 9,
+  unmatched: 5,
 };
 
 const DEFAULT_PEOPLE = [
@@ -158,15 +160,17 @@ function App() {
   }
 
   // For a person, compute { location -> probability } based on rank and slider values
+  // Ranks 1-4 get dedicated probabilities; ranks 5+ share rank5plus equally.
+  // "unmatched" probability is implicit (person matches nowhere).
   function getLocationProbs(programs) {
     const probs = {};
-    const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3];
-    const numFourPlus = Math.max(0, programs.length - 3);
-    const fourPlusEach = numFourPlus > 0 ? rankProbs.rank4plus / numFourPlus : 0;
+    const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3, rankProbs.rank4];
+    const numFivePlus = Math.max(0, programs.length - 4);
+    const fivePlusEach = numFivePlus > 0 ? rankProbs.rank5plus / numFivePlus : 0;
 
     programs.forEach((program, i) => {
       const loc = program.location.toLowerCase().trim();
-      const p = i < 3 ? rankValues[i] / 100 : fourPlusEach / 100;
+      const p = i < 4 ? (rankValues[i] ?? 0) / 100 : fivePlusEach / 100;
       probs[loc] = (probs[loc] || 0) + p;
     });
     return probs;
@@ -389,13 +393,13 @@ function App() {
       // Collect all program names across valid people
       const programsByPerson = valid.map((idx) => {
         const progs = peopleWithPrograms[idx].programs;
-        const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3];
-        const numFourPlus = Math.max(0, progs.length - 3);
-        const fourPlusEach = numFourPlus > 0 ? rankProbs.rank4plus / numFourPlus : 0;
+        const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3, rankProbs.rank4];
+        const numFivePlus = Math.max(0, progs.length - 4);
+        const fivePlusEach = numFivePlus > 0 ? rankProbs.rank5plus / numFivePlus : 0;
         const map = {};
         progs.forEach((prog, i) => {
           const key = prog.name.toLowerCase().trim();
-          const p = i < 3 ? rankValues[i] / 100 : fourPlusEach / 100;
+          const p = i < 4 ? (rankValues[i] ?? 0) / 100 : fivePlusEach / 100;
           map[key] = (map[key] || 0) + p;
         });
         return map;
@@ -499,9 +503,9 @@ function App() {
       for (let i = 0; i < N; i++) {
         const progs = peopleWithPrograms[i].programs;
         if (progs.length === 0) continue;
-        const lastProb = progs.length <= 3
-          ? [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3][progs.length - 1] / 100
-          : (rankProbs.rank4plus / Math.max(1, progs.length - 3)) / 100;
+        const lastProb = progs.length <= 4
+          ? [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3, rankProbs.rank4][progs.length - 1] / 100
+          : (rankProbs.rank5plus / Math.max(1, progs.length - 4)) / 100;
         prob += lastProb;
       }
       return Math.min(1, prob);
