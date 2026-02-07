@@ -61,6 +61,13 @@ const DEFAULT_PEOPLE = [
     programs: [
       { id: 'ka-1', name: 'Sinai', location: 'NYC' },
       { id: 'ka-2', name: 'Beth Israel', location: 'Boston' },
+      { id: 'ka-3', name: 'Brown', location: 'Rhode Island' },
+      { id: 'ka-4', name: 'HUP', location: 'Philadelphia' },
+      { id: 'ka-5', name: 'Rutgers Cooperman', location: 'NJ' },
+      { id: 'ka-6', name: 'Rutgers RWJ', location: 'NJ' },
+      { id: 'ka-7', name: 'CCF', location: 'Cleveland' },
+      { id: 'ka-8', name: 'Zucker South Shore', location: 'Long Island' },
+      { id: 'ka-9', name: 'UH', location: 'Cleveland' },
     ],
   },
   {
@@ -68,6 +75,8 @@ const DEFAULT_PEOPLE = [
     programs: [
       { id: 'kn-1', name: 'Sinai', location: 'NYC' },
       { id: 'kn-2', name: 'NYU', location: 'NYC' },
+      { id: 'kn-3', name: 'CCF', location: 'Cleveland' },
+      { id: 'kn-4', name: 'UH', location: 'Cleveland' },
     ],
   },
   {
