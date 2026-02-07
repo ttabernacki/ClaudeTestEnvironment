@@ -385,7 +385,8 @@ function App() {
     const bestCity = calcMostLikelySharedCity(allLocationProbs, allLocations);
     const names = peopleWithPrograms.map((p) => p.name);
 
-    const anyoneAlone = Math.min(1, pAlone.reduce((s, p) => s + p, 0));
+    // Approximate via independence: 1 - product of (1 - P(person i alone))
+    const anyoneAlone = 1 - pAlone.reduce((prod, p) => prod * (1 - p), 1);
 
     // Helper: find person index by name (case-insensitive)
     function findPerson(name) {
@@ -562,6 +563,38 @@ function App() {
       ? pGroupSameCity([katelynIdx, davidIdx])
       : null;
 
+    // NYC rent crisis: P(4+ people in NYC)
+    const nycCrisisProb = (() => {
+      const dp = calcExactlyKAtLocation('nyc', allLocationProbs);
+      let prob = 0;
+      for (let k = 4; k <= N; k++) prob += dp[k];
+      return prob;
+    })();
+
+    // Cleveland renaissance: P(3+ people in Cleveland)
+    const clevelandProb = (() => {
+      const dp = calcExactlyKAtLocation('cleveland', allLocationProbs);
+      let prob = 0;
+      for (let k = 3; k <= N; k++) prob += dp[k];
+      return prob;
+    })();
+
+    // Elliot yearns: P(Elliot alone in his city)
+    const elliotYearnsProb = elliotIdx !== null ? pAlone[elliotIdx] : null;
+
+    // Tomasz-David romance arc: P(Tomasz and David same city)
+    const romanceArcProb = tomaszIdx !== null && davidIdx !== null
+      ? pGroupSameCity([tomaszIdx, davidIdx])
+      : null;
+
+    // Boston tea party: P(3+ people in Boston)
+    const bostonTeaProb = (() => {
+      const dp = calcExactlyKAtLocation('boston', allLocationProbs);
+      let prob = 0;
+      for (let k = 3; k <= N; k++) prob += dp[k];
+      return prob;
+    })();
+
     funStats = [
       {
         label: `Chance someone's hate-swiping Hinge alone in a new city`,
@@ -573,12 +606,6 @@ function App() {
         label: `Chance of accidental resident orgy`,
         desc: `P(${Math.min(3, N)}+ people end up in the same city)`,
         value: orgyProb,
-        show: true,
-      },
-      {
-        label: `Chance you'll all be fighting over the same 1-bedroom apartment`,
-        desc: `P(everyone in the same city)`,
-        value: everyoneSameProb,
         show: true,
       },
       {
@@ -653,6 +680,36 @@ function App() {
         desc: `P(Katelyn and David end up in the same city)`,
         value: yorkingProb,
         show: yorkingProb !== null,
+      },
+      {
+        label: `NYC rent crisis deepens`,
+        desc: `P(4+ people end up in NYC)`,
+        value: nycCrisisProb,
+        show: true,
+      },
+      {
+        label: `Cleveland renaissance`,
+        desc: `P(3+ people end up in Cleveland)`,
+        value: clevelandProb,
+        show: true,
+      },
+      {
+        label: `Elliot yearns`,
+        desc: `P(Elliot ends up in a city with no one else)`,
+        value: elliotYearnsProb,
+        show: elliotYearnsProb !== null,
+      },
+      {
+        label: `Tomasz-David romance arc`,
+        desc: `P(Tomasz and David end up in the same city)`,
+        value: romanceArcProb,
+        show: romanceArcProb !== null,
+      },
+      {
+        label: `Boston tea party`,
+        desc: `P(3+ people end up in Boston)`,
+        value: bostonTeaProb,
+        show: true,
       },
       {
         label: `Chance of Berlin 2027 Trip`,
