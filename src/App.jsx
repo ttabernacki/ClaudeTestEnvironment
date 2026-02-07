@@ -8,8 +8,7 @@ const DEFAULT_RANK_PROBS = {
   rank2: 17,
   rank3: 11,
   rank4: 7,
-  rank5plus: 9,
-  unmatched: 2,
+  rank5plus: 11,
 };
 
 const DEFAULT_PEOPLE = [
@@ -160,13 +159,15 @@ function App() {
   }
 
   // For a person, compute { location -> probability } based on rank and slider values
-  // Ranks 1-4 get dedicated probabilities; ranks 5+ share rank5plus equally.
-  // "unmatched" probability is implicit (person matches nowhere).
+  // Ranks 1-4 get dedicated probabilities; ranks 5+ share rank5plus equally
+  // among remaining programs + 1 implicit "unmatched" slot.
+  // More programs = lower unmatched chance.
   function getLocationProbs(programs) {
     const probs = {};
     const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3, rankProbs.rank4];
     const numFivePlus = Math.max(0, programs.length - 4);
-    const fivePlusEach = numFivePlus > 0 ? rankProbs.rank5plus / numFivePlus : 0;
+    // +1 slot for unmatched: e.g. 2 programs beyond rank 4 → split among 3 (prog5, prog6, unmatched)
+    const fivePlusEach = rankProbs.rank5plus / (numFivePlus + 1);
 
     programs.forEach((program, i) => {
       const loc = program.location.toLowerCase().trim();
@@ -395,7 +396,7 @@ function App() {
         const progs = peopleWithPrograms[idx].programs;
         const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3, rankProbs.rank4];
         const numFivePlus = Math.max(0, progs.length - 4);
-        const fivePlusEach = numFivePlus > 0 ? rankProbs.rank5plus / numFivePlus : 0;
+        const fivePlusEach = rankProbs.rank5plus / (numFivePlus + 1);
         const map = {};
         progs.forEach((prog, i) => {
           const key = prog.name.toLowerCase().trim();
@@ -498,10 +499,15 @@ function App() {
       : null;
 
     // Someone cultivates resilience: P(at least one person goes unmatched)
+    // Each person's unmatched prob = 1 - sum(their location probs)
     const unmatchedProb = (() => {
-      const pUnmatched = rankProbs.unmatched / 100;
-      // P(at least one unmatched) = 1 - P(all matched) = 1 - (1 - pUnmatched)^N
-      return 1 - Math.pow(1 - pUnmatched, N);
+      let allMatchedProb = 1;
+      for (let i = 0; i < N; i++) {
+        const locSum = Object.values(allLocationProbs[i]).reduce((s, v) => s + v, 0);
+        const pMatched = Math.min(1, locSum);
+        allMatchedProb *= pMatched;
+      }
+      return 1 - allMatchedProb;
     })();
 
     // Chance of Being Well Fed: P(anyone in same city as Elad, Matt, or Tomasz)

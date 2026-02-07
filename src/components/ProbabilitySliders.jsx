@@ -1,6 +1,6 @@
 export default function ProbabilitySliders({ rankProbs, setRankProbs }) {
-  const labels = ['1st Choice', '2nd Choice', '3rd Choice', '4th Choice', '>4th Choice', 'Unmatched'];
-  const keys = ['rank1', 'rank2', 'rank3', 'rank4', 'rank5plus', 'unmatched'];
+  const labels = ['1st Choice', '2nd Choice', '3rd Choice', '4th Choice', '>4th Choice'];
+  const keys = ['rank1', 'rank2', 'rank3', 'rank4', 'rank5plus'];
 
   function handleChange(changedIndex, newVal) {
     setRankProbs((prev) => {
