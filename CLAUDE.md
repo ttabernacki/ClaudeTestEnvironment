@@ -22,13 +22,14 @@ RatMatch — a React webapp where users build a residency rank list (drag-and-dr
 ## Project Structure
 ```
 src/
-├── App.jsx                     # Root component — holds program state
+├── App.jsx                     # Root component — holds state, probability calcs, and layout
 ├── App.css                     # App-level styles
 ├── index.css                   # Global reset/base styles
 ├── main.jsx                    # Entry point
 └── components/
-    ├── RankList.jsx             # Drag-and-drop rank list + add form
-    └── SortableProgram.jsx      # Single draggable rank item
+    ├── PersonColumn.jsx         # Person card with drag-and-drop rank list + add form
+    ├── SortableProgram.jsx      # Single draggable rank item
+    └── ProbabilitySliders.jsx   # Rank probability weight sliders (constrained to 100%)
 ```
 
 ## Testing
