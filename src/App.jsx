@@ -497,18 +497,11 @@ function App() {
       ? pGroupSameCity(manipGroup)
       : null;
 
-    // Someone cultivates resilience: P(someone gets their last choice)
-    const lastChoiceProb = (() => {
-      let prob = 0;
-      for (let i = 0; i < N; i++) {
-        const progs = peopleWithPrograms[i].programs;
-        if (progs.length === 0) continue;
-        const lastProb = progs.length <= 4
-          ? [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3, rankProbs.rank4][progs.length - 1] / 100
-          : (rankProbs.rank5plus / Math.max(1, progs.length - 4)) / 100;
-        prob += lastProb;
-      }
-      return Math.min(1, prob);
+    // Someone cultivates resilience: P(at least one person goes unmatched)
+    const unmatchedProb = (() => {
+      const pUnmatched = rankProbs.unmatched / 100;
+      // P(at least one unmatched) = 1 - P(all matched) = 1 - (1 - pUnmatched)^N
+      return 1 - Math.pow(1 - pUnmatched, N);
     })();
 
     // Chance of Being Well Fed: P(anyone in same city as Elad, Matt, or Tomasz)
@@ -548,12 +541,6 @@ function App() {
 
     funStats = [
       {
-        label: `Chance we all drop out of medicine and move to Berlin`,
-        desc: `P(no two people in the same city)`,
-        value: noOverlapProb,
-        show: true,
-      },
-      {
         label: `Chance someone's hate-swiping Hinge alone in a new city`,
         desc: `P(at least one person has no one else in their city)`,
         value: anyoneAlone,
@@ -586,7 +573,7 @@ function App() {
       },
       {
         label: `Chance of professionalism violation`,
-        desc: `P(Tomasz, Matt, and/or Elliot match at the same program)`,
+        desc: `P(Tomasz, Matt, and Elliot match at the same program)`,
         value: profViolationProb,
         show: profViolationProb !== null,
       },
@@ -622,8 +609,8 @@ function App() {
       },
       {
         label: `Someone cultivates resilience`,
-        desc: `P(someone matches at their last-ranked program)`,
-        value: lastChoiceProb,
+        desc: `P(at least one person goes unmatched)`,
+        value: unmatchedProb,
         show: true,
       },
       {
