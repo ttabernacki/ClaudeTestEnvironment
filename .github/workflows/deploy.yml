@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, claude/initial-setup-YCdhv]
+    branches: [main, claude/initial-setup-YCdhv, claude/update-cornell-probability-6JU8Q]
 
 permissions:
   contents: read
