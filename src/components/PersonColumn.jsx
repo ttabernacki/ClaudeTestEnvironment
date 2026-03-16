@@ -79,7 +79,7 @@ export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms,
         <div className="matched-status">
           <p className="matched-label">Matched</p>
           <div className="matched-program">
-            {person.programs.find(p => p.location.toLowerCase().trim() === person.matchedLocation.toLowerCase().trim())?.name || 'Unknown Program'}
+            {person.matchedProgram || person.programs.find(p => p.location.toLowerCase().trim() === person.matchedLocation.toLowerCase().trim())?.name || 'Unknown Program'}
           </div>
         </div>
       ) : (

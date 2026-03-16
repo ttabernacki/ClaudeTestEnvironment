@@ -104,6 +104,11 @@ const DEFAULT_PEOPLE = [
   },
 ];
 
+// Known match results — applied on top of localStorage data
+const MATCHED_PEOPLE = {
+  matt: { matched: true, matchedLocation: 'NYC', matchedProgram: 'Cornell' },
+};
+
 function loadFromStorage(key, fallback) {
   try {
     const saved = localStorage.getItem(key);
@@ -113,8 +118,18 @@ function loadFromStorage(key, fallback) {
   }
 }
 
+function applyMatchResults(people) {
+  return people.map((person) => {
+    const match = MATCHED_PEOPLE[person.name.toLowerCase()];
+    if (match) {
+      return { ...person, ...match };
+    }
+    return person;
+  });
+}
+
 function App() {
-  const [people, setPeople] = useState(() => loadFromStorage('rmc-people', DEFAULT_PEOPLE));
+  const [people, setPeople] = useState(() => applyMatchResults(loadFromStorage('rmc-people', DEFAULT_PEOPLE)));
   const [newPersonName, setNewPersonName] = useState('');
   const [rankProbs, setRankProbs] = useState(() => loadFromStorage('rmc-rankProbs', DEFAULT_RANK_PROBS));
 
