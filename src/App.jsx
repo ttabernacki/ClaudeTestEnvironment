@@ -39,6 +39,8 @@ const DEFAULT_PEOPLE = [
   },
   {
     id: 'default-matt', name: 'Matt', included: true,
+    matched: true,
+    matchedLocation: 'NYC',
     programs: [
       { id: 'm-1', name: 'Cornell', location: 'NYC' },
       { id: 'm-2', name: 'Sinai', location: 'NYC' },
@@ -162,7 +164,13 @@ function App() {
   // Ranks 1-4 get dedicated probabilities; ranks 5+ share rank5plus equally
   // among remaining programs + 1 implicit "unmatched" slot.
   // More programs = lower unmatched chance.
-  function getLocationProbs(programs) {
+  // If person has matched, return 100% at matched location.
+  function getLocationProbs(programs, person) {
+    if (person?.matched && person?.matchedLocation) {
+      const loc = person.matchedLocation.toLowerCase().trim();
+      return { [loc]: 1.0 };
+    }
+
     const probs = {};
     const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3, rankProbs.rank4];
     const numFivePlus = Math.max(0, programs.length - 4);
@@ -265,13 +273,15 @@ function App() {
   let allLocationProbs = [];
   let allLocations = new Set();
   if (canCalc) {
-    allLocationProbs = peopleWithPrograms.map((p) => getLocationProbs(p.programs));
+    allLocationProbs = peopleWithPrograms.map((p) => getLocationProbs(p.programs, p));
 
     // Couples match kludge: if Elad matches NYC, Matt is 100% NYC.
     // Adjusted Matt probs = P(Elad NYC) * {nyc:1} + P(Elad !NYC) * Matt's normal probs
+    // Skip if Matt has already matched
     const eladIdx = peopleWithPrograms.findIndex((p) => p.name.toLowerCase() === 'elad');
     const mattIdx = peopleWithPrograms.findIndex((p) => p.name.toLowerCase() === 'matt');
-    if (eladIdx >= 0 && mattIdx >= 0) {
+    const mattPerson = mattIdx >= 0 ? peopleWithPrograms[mattIdx] : null;
+    if (eladIdx >= 0 && mattIdx >= 0 && !mattPerson?.matched) {
       const pEladNYC = allLocationProbs[eladIdx]['nyc'] || 0;
       const pEladNotNYC = 1 - pEladNYC;
       const mattNormal = allLocationProbs[mattIdx];
@@ -411,7 +421,19 @@ function App() {
       // For each program name, P(all of them match there)
       // Collect all program names across valid people
       const programsByPerson = valid.map((idx) => {
-        const progs = peopleWithPrograms[idx].programs;
+        const person = peopleWithPrograms[idx];
+        const progs = person.programs;
+        // If person is matched, only they can match at their matched program's program name
+        if (person.matched && person.matchedLocation) {
+          const map = {};
+          for (const prog of progs) {
+            const progName = prog.name.toLowerCase().trim();
+            if (prog.location.toLowerCase().trim() === person.matchedLocation.toLowerCase().trim()) {
+              map[progName] = 1.0;
+            }
+          }
+          return map;
+        }
         const rankValues = [rankProbs.rank1, rankProbs.rank2, rankProbs.rank3, rankProbs.rank4];
         const numFivePlus = Math.max(0, progs.length - 4);
         const fivePlusEach = rankProbs.rank5plus / (numFivePlus + 1);
