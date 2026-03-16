@@ -75,48 +75,59 @@ export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms,
         </button>
       </div>
 
-      <form className="add-program-form" onSubmit={handleAddProgram}>
-        <input
-          type="text"
-          value={newProgram}
-          onChange={(e) => setNewProgram(e.target.value)}
-          placeholder="Program name…"
-          aria-label={`Add program for ${person.name}`}
-        />
-        <input
-          type="text"
-          value={newLocation}
-          onChange={(e) => setNewLocation(e.target.value)}
-          placeholder="Location…"
-          aria-label={`Program location for ${person.name}`}
-        />
-        <button type="submit">Add</button>
-      </form>
-
-      {person.programs.length === 0 ? (
-        <p className="empty-message-small">No programs yet.</p>
+      {person.matched ? (
+        <div className="matched-status">
+          <p className="matched-label">Matched</p>
+          <div className="matched-program">
+            {person.programs.find(p => p.location.toLowerCase().trim() === person.matchedLocation.toLowerCase().trim())?.name || 'Unknown Program'}
+          </div>
+        </div>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-          modifiers={[restrictToVerticalAxis]}
-        >
-          <SortableContext items={person.programs} strategy={verticalListSortingStrategy}>
-            <div className="rank-list">
-              {person.programs.map((program, index) => (
-                <SortableProgram
-                  key={program.id}
-                  id={program.id}
-                  rank={index + 1}
-                  name={program.name}
-                  location={program.location}
-                  onRemove={handleRemoveProgram}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <>
+          <form className="add-program-form" onSubmit={handleAddProgram}>
+            <input
+              type="text"
+              value={newProgram}
+              onChange={(e) => setNewProgram(e.target.value)}
+              placeholder="Program name…"
+              aria-label={`Add program for ${person.name}`}
+            />
+            <input
+              type="text"
+              value={newLocation}
+              onChange={(e) => setNewLocation(e.target.value)}
+              placeholder="Location…"
+              aria-label={`Program location for ${person.name}`}
+            />
+            <button type="submit">Add</button>
+          </form>
+
+          {person.programs.length === 0 ? (
+            <p className="empty-message-small">No programs yet.</p>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToVerticalAxis]}
+            >
+              <SortableContext items={person.programs} strategy={verticalListSortingStrategy}>
+                <div className="rank-list">
+                  {person.programs.map((program, index) => (
+                    <SortableProgram
+                      key={program.id}
+                      id={program.id}
+                      rank={index + 1}
+                      name={program.name}
+                      location={program.location}
+                      onRemove={handleRemoveProgram}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </>
       )}
     </div>
   );
