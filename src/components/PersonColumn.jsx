@@ -56,7 +56,7 @@ export default function PersonColumn({ person, onRemovePerson, onUpdatePrograms,
   }
 
   return (
-    <div className={`person-column${person.included === false ? ' excluded' : ''}`}>
+    <div className={`person-column${person.included === false ? ' excluded' : ''}${person.matched ? ' matched' : ''}`}>
       <div className="person-header">
         <label className="include-toggle" title={person.included === false ? 'Excluded from calculations' : 'Included in calculations'}>
           <input
